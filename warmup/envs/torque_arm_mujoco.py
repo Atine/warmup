@@ -1,18 +1,19 @@
 import os
 
 import numpy as np
-from gym import utils
-from gym.envs.mujoco import mujoco_env
+from gymnasium import utils
+from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.spaces import Box
 
 from .muscle_arm import MuscleArm
 
 
 class TorqueArmMuJoCo(MuscleArm):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.model_type = "torque_arm_mujoco"
         self.nq = 2
         self.ball_attached = 0
-        super(TorqueArmMuJoCo, self).__init__()
+        super(TorqueArmMuJoCo, self).__init__(**kwargs)
         self.set_gravity([9.81, 0, 0])
         self.has_init = True
 
@@ -20,7 +21,7 @@ class TorqueArmMuJoCo(MuscleArm):
         self.randomise_init_state()
         if self.random_goals:
             self.target = self.sample_rectangular_goal()
-        self.sim.data.qpos[-2:] = self.target[:2]
+        self.data.qpos[-2:] = self.target[:2]
         return self._get_obs()
 
     def sample_rectangular_goal(self):
@@ -44,9 +45,16 @@ class TorqueArmMuJoCo(MuscleArm):
     @property
     def xml_path(self):
         if self.ball_attached:
-            return "xml_files/torque_arm_mujoco_ball.xml"
+            path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "../xml_files/torque_arm_mujoco_ball.xml"
+            )
         else:
-            return "xml_files/torque_arm_mujoco.xml"
+            path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "../xml_files/torque_arm_mujoco.xml"
+            )
+        return path
 
     def activate_ball(self):
         self.ball_attached = 1
@@ -63,7 +71,9 @@ class TorqueArmMuJoCo(MuscleArm):
             )
             try:
                 # second one is frameskip
-                mujoco_env.MujocoEnv.__init__(self, path, self.frameskip)
+                observation_space = Box(
+                        low=-np.inf, high=np.inf, shape=(16,), dtype=np.float64)
+                MujocoEnv.__init__(self, path, self.frameskip, observation_space)
                 break
             except FileNotFoundError:
                 print("xml file not found, reentering loop.")
@@ -80,12 +90,12 @@ class TorqueArmMuJoCo(MuscleArm):
         Removed adaptive scaling."""
         return np.concatenate(
             [
-                self.sim.data.qpos[: self.nq],
-                self.sim.data.qvel[: self.nq],
-                self.sim.data.actuator_length,
-                self.sim.data.actuator_velocity,
-                self.sim.data.actuator_force,
+                self.data.qpos[: self.nq],
+                self.data.qvel[: self.nq],
+                self.data.actuator_length,
+                self.data.actuator_velocity,
+                self.data.actuator_force,
                 self.target,
-                self.sim.data.get_site_xpos(self.tracking_str),
+                self.data.site(self.tracking_str).xpos,
             ]
         )

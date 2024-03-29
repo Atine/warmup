@@ -1,30 +1,26 @@
 import os
-from abc import ABC, abstractmethod
-
 import numpy as np
-from gym import utils
-from gym.envs.mujoco import mujoco_env
+
+import mujoco
+from gymnasium import utils
+from gymnasium.envs.mujoco import MujocoEnv
 
 from ..utils.env_utils import load_default_params
 
 
-class AbstractMuscleEnv(mujoco_env.MujocoEnv, utils.EzPickle, ABC):
-    @abstractmethod
-    def reset_model(self):
-        pass
+class MuscleEnv(MujocoEnv, utils.EzPickle):
+    metadata = {
+        "render_modes": [
+            "human",
+            "rgb_array",
+            "depth_array",
+        ],
+        "render_fps": 100,
+    }
 
-    @abstractmethod
-    def viewer_setup(self):
-        pass
+    def __init__(self, **kwargs):
 
-    @abstractmethod
-    def set_target(self):
-        pass
-
-
-class MuscleEnv(AbstractMuscleEnv):
-    def __init__(self):
-        # initialise this with large number for env creation
+        # INitialise this with large number for env creation
         self.manually_set_action_space = 0
         self.render_substep_bool = 0
         default_path = self.get_default_params_path()
@@ -34,6 +30,16 @@ class MuscleEnv(AbstractMuscleEnv):
         self.quick_settings(args)
         self.reset()
 
+        utils.EzPickle.__init__(self)
+
+        MujocoEnv.__init__(
+            self,
+            self.xml_path,
+            self.frameskip,
+            self.observation_space,
+            **kwargs,
+        )
+
     def render_substep(self):
         self.render_substep_bool = 1
 
@@ -42,12 +48,12 @@ class MuscleEnv(AbstractMuscleEnv):
             if np.array(ctrl).shape != self.action_space.shape:
                 raise ValueError("Action dimension mismatch")
 
-        self.sim.data.ctrl[:] = ctrl
+        self.data.ctrl[:] = ctrl
         for _ in range(n_frames):
             if self.render_substep_bool:
-                # self.render('rgb_array')
-                self.render("human")
-            self.sim.step()
+                self.render('rgb_array')
+                # self.render("human")
+        mujoco.mj_step(self.model, self.data, nstep=n_frames)
 
     def get_default_params_path(self):
         default_path = os.path.dirname(
@@ -148,14 +154,14 @@ class MuscleEnv(AbstractMuscleEnv):
             act = np.zeros_like(self.muscle_lengths())
         return np.concatenate(
             [
-                self.sim.data.qpos[: self.nq],
-                self.sim.data.qvel[: self.nq],
+                self.data.qpos[: self.nq],
+                self.data.qvel[: self.nq],
                 self.muscle_lengths(),
                 self.muscle_forces(),
                 self.muscle_velocities(),
                 act,
                 self.target,
-                self.sim.data.get_site_xpos(self.tracking_str),
+                self.data.site_xpos(self.tracking_str),
             ]
         )
 

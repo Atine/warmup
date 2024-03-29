@@ -1,6 +1,4 @@
-free-mujoco-py
-matplotlib
-scipy
-gym==0.13
+gymnasium
 torch
 PyYaml
+imageio

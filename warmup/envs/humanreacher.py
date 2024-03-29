@@ -1,18 +1,19 @@
 import os
 
 import numpy as np
-from gym import utils
-from gym.envs.mujoco import mujoco_env
+from gymnasium import utils
+from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.spaces import Box
 
 from .muscle_arm import MuscleArm
 
 
 class HumanReacher(MuscleArm):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.model_type = "humanreacher"
         self.tracking_str = "endeffector"
         self.nq = 24
-        super(MuscleArm, self).__init__()
+        super(MuscleArm, self).__init__(**kwargs)
         self.set_gravity([0, 0, -9.81])
         self.has_init = True
 
@@ -20,7 +21,7 @@ class HumanReacher(MuscleArm):
         self.randomise_init_state(diff=0.03)
         if self.random_goals:
             self.target = self.sample_rectangular_goal()
-        self.sim.data.qpos[-3:] = self.target[:3]
+        self.data.qpos[-3:] = self.target[:3]
         return self._get_obs()
 
     def sample_rectangular_goal(self):
@@ -43,19 +44,21 @@ class HumanReacher(MuscleArm):
 
     @property
     def xml_path(self):
-        return "xml_files/humanreacher.xml"
+        path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "../xml_files/humanreacher.xml"
+        )
+        return path
 
     def reinitialise(self, args):
         """if we want to load from specific xml, not the creator"""
         self.need_reinit = 0
         while True:
-            path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)),
-                self.xml_path,
-            )
             try:
                 # second one is frameskip
-                mujoco_env.MujocoEnv.__init__(self, path, self.frameskip)
+                observation_space = Box(
+                low=-np.inf, high=np.inf, shape=(254,), dtype=np.float64)
+                MujocoEnv.__init__(self, self.xml_path, self.frameskip, observation_space)
                 break
             except FileNotFoundError:
                 print("xml file not found, reentering loop.")
@@ -70,13 +73,13 @@ class HumanReacher(MuscleArm):
         Removed adaptive scaling."""
         return np.concatenate(
             [
-                self.sim.data.qpos[: self.nq],
-                self.sim.data.qvel[: self.nq],
+                self.data.qpos[: self.nq],
+                self.data.qvel[: self.nq],
                 self.muscle_length(),
                 self.muscle_velocity(),
                 self.muscle_force(),
                 self.muscle_activity(),
                 self.target,
-                self.sim.data.get_site_xpos(self.tracking_str),
+                self.data.site(self.tracking_str).xpos
             ]
         )

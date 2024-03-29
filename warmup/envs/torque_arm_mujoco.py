@@ -47,12 +47,12 @@ class TorqueArmMuJoCo(MuscleArm):
         if self.ball_attached:
             path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                "../xml_files/torque_arm_mujoco_ball.xml"
+                "../xml_files/torque_arm_mujoco_ball.xml",
             )
         else:
             path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                "../xml_files/torque_arm_mujoco.xml"
+                "../xml_files/torque_arm_mujoco.xml",
             )
         return path
 
@@ -65,27 +65,24 @@ class TorqueArmMuJoCo(MuscleArm):
         """if we want to load from specific xml, not the creator"""
         self.need_reinit = 0
         while True:
-            path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)),
-                self.xml_path,
-            )
             try:
                 # second one is frameskip
                 observation_space = Box(
-                        low=-np.inf, high=np.inf, shape=(16,), dtype=np.float64)
-                MujocoEnv.__init__(self, path, self.frameskip, observation_space)
+                    low=-np.inf, high=np.inf, shape=(16,), dtype=np.float64
+                )
+                MujocoEnv.__init__(
+                    self, self.xml_path, self.frameskip, observation_space
+                )
                 break
             except FileNotFoundError:
                 print("xml file not found, reentering loop.")
         utils.EzPickle.__init__(self)
 
-    def step(self, *args, **kwargs):
-        return super().step(*args, **kwargs)
-
     def _get_obs(self):
         """Creates observation for MDP.
-        The choice here is to either use normalized com_vel in state and reward or just in reward. I could
-        imagine it leading to faster learning when normalized, as larger velocities don't constitute "new"
+        The choice here is to either use normalized com_vel in state
+        and reward or just in reward. I could imagine it leading to faster
+        learning when normalized, as larger velocities don't constitute "new"
         state space regions. But it also shifts the learning target.
         Removed adaptive scaling."""
         return np.concatenate(

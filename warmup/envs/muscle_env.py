@@ -19,7 +19,6 @@ class MuscleEnv(MujocoEnv, utils.EzPickle):
     }
 
     def __init__(self, **kwargs):
-
         # INitialise this with large number for env creation
         self.manually_set_action_space = 0
         self.render_substep_bool = 0
@@ -51,7 +50,7 @@ class MuscleEnv(MujocoEnv, utils.EzPickle):
         self.data.ctrl[:] = ctrl
         for _ in range(n_frames):
             if self.render_substep_bool:
-                self.render('rgb_array')
+                self.render("rgb_array")
                 # self.render("human")
         mujoco.mj_step(self.model, self.data, nstep=n_frames)
 
@@ -93,11 +92,13 @@ class MuscleEnv(MujocoEnv, utils.EzPickle):
         self.random_goals = random_goals
 
     def set_termination_distance(self, distance=0.08):
-        """Set endeffector to goal distance at which the episode is considered to be solved."""
+        """Set endeffector to goal distance at which the
+        episode is considered to be solved."""
         self.termination_distance = distance
 
     def set_termination(self, termination=False):
-        """Decide wether the episode will be prematurely terminated when achieving the goal.
+        """Decide wether the episode will be prematurely
+        terminated when achieving the goal.
         A <done> signal will be emitted."""
         self.termination = termination
 

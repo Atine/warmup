@@ -47,7 +47,7 @@ class MuscleArmMuJoCo(MuscleArm):
     def xml_path(self):
         path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "../xml_files/muscle_arm_mujoco.xml"
+            "../xml_files/muscle_arm_mujoco.xml",
         )
         return path
 
@@ -63,9 +63,11 @@ class MuscleArmMuJoCo(MuscleArm):
             try:
                 # second one is frameskip
                 observation_space = Box(
-                        low=-np.inf, high=np.inf, shape=(34,), dtype=np.float64)
-
-                MujocoEnv.__init__(self, self.xml_path, self.frameskip, observation_space)
+                    low=-np.inf, high=np.inf, shape=(34,), dtype=np.float64
+                )
+                MujocoEnv.__init__(
+                    self, self.xml_path, self.frameskip, observation_space
+                )
                 break
             except FileNotFoundError:
                 print("xml file not found, reentering loop.")
@@ -74,11 +76,11 @@ class MuscleArmMuJoCo(MuscleArm):
 
     def _get_obs(self):
         """Creates observation for MDP.
-        The choice here is to either use normalized com_vel in state and reward or just in reward. I could
-        imagine it leading to faster learning when normalized, as larger velocities don't constitute "new"
+        The choice here is to either use normalized com_vel in state
+        and reward or just in reward. I could imagine it leading to faster
+        learning when normalized, as larger velocities don't constitute "new"
         state space regions. But it also shifts the learning target.
         Removed adaptive scaling."""
-
         return np.concatenate(
             [
                 self.data.qpos[: self.nq],
@@ -88,6 +90,6 @@ class MuscleArmMuJoCo(MuscleArm):
                 self.muscle_force(),
                 self.muscle_activity(),
                 self.target,
-                self.data.site(self.tracking_str).xpos
+                self.data.site(self.tracking_str).xpos,
             ]
         )

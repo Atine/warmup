@@ -10,7 +10,8 @@ class MuscleArm(MuscleEnv):
 
     def set_target(self, target):
         """
-        Target that we have to reach, reward is based on distance between this target and endeffector position
+        Target that we have to reach, reward is based on distance
+        between this target and endeffector position
         """
         self.target = np.array(target, dtype=np.float32)
 
@@ -31,7 +32,13 @@ class MuscleArm(MuscleEnv):
         if done:
             reward += 10.0
 
-        # truncation=False as the time limit is handled by the `TimeLimit` wrapper added during `make`
+        # following official gymnasium implementations such as:
+        # https://github.com/Farama-Foundation/Gymnasium/blob/
+        # f0202ae350c885bb8317858c965312d9459e7155/gymnasium/
+        # envs/mujoco/humanoid_v4.py#L164
+        #
+        # truncation=False as the time limit is handled by the
+        # `TimeLimit` wrapper added during `make`
         return (
             self._get_obs(),
             reward,

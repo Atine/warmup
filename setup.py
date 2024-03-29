@@ -9,7 +9,5 @@ setup(
     license="MIT",
     packages=find_packages(),
     include_package_data=True,
-    package_data={
-        "": ["*.yaml", "*.stl", "*.xml"]
-    },
+    package_data={"": ["*.yaml", "*.stl", "*.xml"]},
 )
